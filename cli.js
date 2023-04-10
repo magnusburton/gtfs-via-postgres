@@ -57,7 +57,7 @@ const {
 if (flags.help) {
 	process.stdout.write(`
 Usage:
-    gtfs-to-sql [options] [--] <gtfs-file> ...
+    import-gtfs-into-duckdb [options] [--] <path-to-duckdb> <gtfs-file> ...
 Options:
     --silent                  -s  Don't show files being converted.
     --require-dependencies    -d  Require files that the specified GTFS files depend
@@ -73,14 +73,9 @@ Options:
     --routes-without-agency-id    Don't require routes.txt items to have an agency_id.
     --stops-without-level-id      Don't require stops.txt items to have a level_id.
                                   Default if levels.txt has not been provided.
-    --stops-location-index        Create a spatial index on stops.stop_loc for efficient
-                                    queries by geolocation.
     --schema                      The schema to use for the database. Default: public
-    --postgraphile                Tweak generated SQL for PostGraphile usage.
-                                    https://www.graphile.org/postgraphile/
 Examples:
-    gtfs-to-sql some-gtfs/*.txt | psql -b # import into PostgreSQL
-    gtfs-to-sql -u -- some-gtfs/*.txt | gzip >gtfs.sql # generate a gzipped SQL dump
+    import-gtfs-into-duckdb some-gtfs.duckdb some-gtfs/*.txt
 
 [1] https://developers.google.com/transit/gtfs/reference/extended-route-types
 [2] https://groups.google.com/g/gtfs-changes/c/keT5rTPS7Y0/m/71uMz2l6ke0J
@@ -94,10 +89,11 @@ if (flags.version) {
 }
 
 const {basename, extname} = require('path')
-const {pipeline} = require('stream')
 const convertGtfsToSql = require('./index')
 
-const files = args.map((file) => {
+const [pathToDb] = args
+
+const files = args.slice(1).map((file) => {
 	const name = basename(file, extname(file))
 	return {name, file}
 })
@@ -115,12 +111,8 @@ const opt = {
 }
 opt.stopsWithoutLevelId = !flags['stops-without-level-id']
 
-pipeline(
-	convertGtfsToSql(files, opt),
-	process.stdout,
-	(err) => {
-		if (!err) return;
-		if (err.code !== 'EPIPE') console.error(err)
-		process.exit(1)
-	}
-)
+convertGtfsToSql(pathToDb, files, opt)
+.catch((err) => {
+	console.error(err)
+	process.exit(1)
+})
