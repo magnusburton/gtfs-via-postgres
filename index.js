@@ -43,6 +43,38 @@ const convertGtfsToSql = async (pathToDb, files, opt = {}) => {
 	debug('deps', deps)
 
 	const tasks = { // file name -> [dep name]
+		// 'is_bcp_47_code': {
+		// 	dep: [],
+		// },
+		// 'is_timezone': {
+		// 	dep: [],
+		// },
+		// ...(tripsWithoutShapeId ? {} : {
+		// 	'shape_exists': {
+		// 		dep: [...deps.shape_exists],
+		// 	},
+		// }),
+
+		// // special handling of calendar/calendar_dates:
+		// // service_days relies on *both* calendar's & calendar_dates' tables to
+		// // be present, so we add mock tasks here. Each of these mock tasks get
+		// // replaced by a file-based one below if the file has been passed.
+		// 'calendar': {
+		// 	dep: [],
+		// },
+		// 'calendar_dates': {
+		// 	dep: [],
+		// },
+		// 'service_days': {
+		// 	dep: ['calendar', 'calendar_dates'],
+		// },
+
+		// // The arrivals_departures & connections views rely on frequencies' table
+		// // to be present, so we add a mock task here. It gets replaced by a
+		// // file-based one below if the file has been passed.
+		// 'frequencies': {
+		// 	dep: [...deps.frequencies],
+		// },
 	}
 
 	for (const file of files) {
